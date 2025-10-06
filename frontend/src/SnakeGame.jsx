@@ -7,9 +7,9 @@ const gameOverSound = new Audio("/sounds/gameover.mp3");
 
 // Define speed presets
 const SPEED_PRESETS = {
-  SLOW: 250,
-  MEDIUM: 150,
-  FAST: 80,
+  SLOW: 60000,
+  MEDIUM: 60000,
+  FAST: 60000,
 };
 
 const SnakeGame = () => {
