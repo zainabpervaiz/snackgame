@@ -1,15 +1,13 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import "./SnakeGame.css";
 
-// 🍎 Audio setup
 const foodSound = new Audio("/sounds/food.mp3");
 const gameOverSound = new Audio("/sounds/gameover.mp3");
 
-// Define speed presets
 const SPEED_PRESETS = {
-  SLOW: 60000,
-  MEDIUM: 60000,
-  FAST: 60000,
+  SLOW: 250,
+  MEDIUM: 150,
+  FAST: 80,
 };
 
 const SnakeGame = () => {
@@ -18,7 +16,6 @@ const SnakeGame = () => {
   const initialFood = [5, 5];
   const initialDirection = "RIGHT";
 
-  // 🎮 Game State
   const [snake, setSnake] = useState(initialSnake);
   const [food, setFood] = useState(initialFood);
   const [direction, setDirection] = useState(initialDirection);
@@ -31,14 +28,15 @@ const SnakeGame = () => {
   const [gameSpeed, setGameSpeed] = useState(SPEED_PRESETS.MEDIUM);
   const [speedOption, setSpeedOption] = useState("MEDIUM");
 
-  // 🏆 Leaderboard
+  // 🆕 Added states
+  const [speedSelected, setSpeedSelected] = useState(false);
+  const [readyToPlay, setReadyToPlay] = useState(false);
+
   const [leaderboard, setLeaderboard] = useState([]);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
 
-  // 🏃‍♂️ Ref for direction
   const currentDirection = useRef(initialDirection);
 
-  // ✅ Save score to backend
   const saveScoreToDB = async (player, score) => {
     try {
       await fetch("http://localhost:5000/api/scores", {
@@ -51,7 +49,6 @@ const SnakeGame = () => {
     }
   };
 
-  // ✅ Fetch top scores
   const fetchLeaderboard = async () => {
     try {
       const res = await fetch("http://localhost:5000/api/scores");
@@ -62,7 +59,6 @@ const SnakeGame = () => {
     }
   };
 
-  // 🔄 Reset game
   const resetGame = useCallback(() => {
     setSnake(initialSnake);
     setFood(initialFood);
@@ -71,22 +67,29 @@ const SnakeGame = () => {
     setScore(0);
     setIsGameOver(false);
     setIsPaused(false);
+    setSpeedSelected(false);
+    setReadyToPlay(false);
   }, []);
 
-  // ⚙️ Change speed
   const changeSpeed = (speedKey) => {
     setGameSpeed(SPEED_PRESETS[speedKey]);
     setSpeedOption(speedKey);
+    setSpeedSelected(true); // show ready button
   };
 
-  // 🎹 Keyboard input
+  // 🆕 Start game after Ready clicked
+  const handleReadyPlay = () => {
+    setReadyToPlay(true);
+    setSpeedSelected(false);
+  };
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === " " && !isGameOver) {
         setIsPaused((prev) => !prev);
         return;
       }
-      if (isGameOver || isPaused) return;
+      if (isGameOver || isPaused || !readyToPlay) return;
 
       let newDirection = currentDirection.current;
       if (e.key === "ArrowUp" && newDirection !== "DOWN") newDirection = "UP";
@@ -100,9 +103,8 @@ const SnakeGame = () => {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isGameOver, isPaused]);
+  }, [isGameOver, isPaused, readyToPlay]);
 
-  // 🎲 Generate new food
   const generateNewFood = useCallback((currentSnake) => {
     let newFood;
     do {
@@ -114,7 +116,6 @@ const SnakeGame = () => {
     return newFood;
   }, []);
 
-  // 🛑 Game Over check
   const checkGameOver = useCallback(
     (head) => {
       const [row, col] = head;
@@ -125,9 +126,8 @@ const SnakeGame = () => {
     [boardSize, snake]
   );
 
-  // 🐍 Snake movement
   useEffect(() => {
-    if (isGameOver || isPaused) return;
+    if (isGameOver || isPaused || !readyToPlay) return;
     currentDirection.current = direction;
 
     const moveSnake = () => {
@@ -149,10 +149,8 @@ const SnakeGame = () => {
             localStorage.setItem("snakeHighScore", score);
           }
 
-          // ✅ Save to DB + Fetch leaderboard
           saveScoreToDB("Guest", score);
           fetchLeaderboard();
-
           return prevSnake;
         }
 
@@ -172,14 +170,12 @@ const SnakeGame = () => {
 
     const interval = setInterval(moveSnake, gameSpeed);
     return () => clearInterval(interval);
-  }, [direction, food, isGameOver, isPaused, checkGameOver, score, highScore, generateNewFood, gameSpeed]);
+  }, [direction, food, isGameOver, isPaused, readyToPlay, checkGameOver, score, highScore, generateNewFood, gameSpeed]);
 
-  // 📊 Fetch leaderboard on load
   useEffect(() => {
     fetchLeaderboard();
   }, []);
 
-  // 🎨 Render board
   const renderBoard = () => {
     let rows = [];
     for (let i = 0; i < boardSize; i++) {
@@ -203,7 +199,6 @@ const SnakeGame = () => {
     return rows;
   };
 
-  // 📝 Render overlay
   const renderOverlay = () => {
     if (isGameOver) {
       return (
@@ -222,7 +217,9 @@ const SnakeGame = () => {
         </div>
       );
     }
-    if (score === 0 && !isGameOver && snake.length === 1 && direction === initialDirection) {
+
+    // 🆕 Step 1: Speed select screen
+    if (!readyToPlay && !isGameOver && !speedSelected) {
       return (
         <div className="game-overlay start-overlay">
           <h2>CHOOSE YOUR SPEED</h2>
@@ -237,10 +234,22 @@ const SnakeGame = () => {
               </button>
             ))}
           </div>
-          <p>Use **Arrow Keys** to start!</p>
         </div>
       );
     }
+
+    // 🆕 Step 2: Show "Ready to Play" after speed selection
+    if (speedSelected && !readyToPlay) {
+      return (
+        <div className="game-overlay ready-overlay">
+          <h2>✅ Speed selected: {speedOption}</h2>
+          <button className="ready-button" onClick={handleReadyPlay}>
+            🎮 Ready to Play
+          </button>
+        </div>
+      );
+    }
+
     return null;
   };
 
@@ -253,7 +262,6 @@ const SnakeGame = () => {
         <span className="current-speed">SPEED: {speedOption}</span>
       </div>
 
-      {/* 🏆 Leaderboard (Dropdown) */}
       <div className="leaderboard-dropdown">
         <button
           className="leaderboard-toggle"
