@@ -1,329 +1,264 @@
-/*==================================================
-  SNAKE GAME CSS - MODERN DARK MODE
-====================================================*/
-
-/*----------------------------------
-  1. BASE & CONTAINER
-------------------------------------*/
 body {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
+    justify-content: center; /* horizontally center */
+    align-items: center;     /* vertically center */
+    min-height: 100vh;       /* full screen height */
     margin: 0;
-    /* Deep, modern background color */
-    background-color: #0d1117; 
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    color: #e6e6e6; 
+    background-color: #121212; /* optional page background */
 }
-
+/* General Layout and Background */
 .snake-game-container {
     display: flex;
     flex-direction: column;
     align-items: center;
-    /* Distinct container background */
-    background-color: #161b22; 
-    padding: 30px; 
-    border-radius: 15px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    background-color: #1e1e1e; /* Dark background */
+    color: #ffffff; /* White text */
+    font-family: 'Arial', sans-serif;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
     max-width: fit-content;
-    margin: 20px;
+    margin: 20px auto;
 }
 
 h1 {
-    color: #4CAF50; /* Vibrant Green */
-    margin-bottom: 20px;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    font-size: 2.2em;
+    color: #4CAF50; /* Green color for the title */
+    margin-bottom: 15px;
+    letter-spacing: 1.5px;
 }
 
-/*----------------------------------
-  2. SCORE AND INFO
-------------------------------------*/
+/* Score Display */
 .score-container {
     width: 100%;
     display: flex;
     justify-content: space-between;
-    padding: 10px 15px;
+    padding: 10px 0;
     font-size: 1.2em;
     font-weight: bold;
-    margin-bottom: 25px; 
-    border-bottom: 2px solid #2f363d; 
+    margin-bottom: 20px;
+    border-bottom: 2px solid #333;
 }
 
 .high-score {
-    color: #FFB74D; 
+    color: #ff9800; /* Orange for high score */
 }
 
-.current-speed {
-    color: #03A9F4;
-}
-
-.controls-info {
-    margin-top: 15px;
-    font-size: 0.9em;
-    color: #aaa;
-    text-align: center;
-}
-
-/*----------------------------------
-  3. GAME BOARD (CSS GRID)
-------------------------------------*/
+/* Board Structure */
 .board-wrapper {
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin: 20px 0; 
+    position: relative; /* Needed for positioning the overlay */
 }
 
 .board {
-    /* Uses CSS Grid and responsive sizing */
-    width: min(90vmin, 500px); 
-    height: min(90vmin, 500px);
-    
-    display: grid;
-    grid-template-columns: repeat(15, 1fr);
-    grid-template-rows: repeat(15, 1fr);
-    
-    border: 5px solid #2f363d; 
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.9);
-    background-color: #1e242c; 
-    border-radius: 8px;
-    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    width: 450px; /* 15 cells * 30px per cell */
+    height: 450px;
+    border: 5px solid #333; /* Dark border */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
+    background-color: #222; /* Board background */
     transition: filter 0.3s;
 }
 
 .board-game-over {
-    filter: blur(2px) grayscale(50%);
+    filter: blur(2px) grayscale(50%); /* Subtle effect when game is over */
 }
 
+.row {
+    display: flex;
+    flex: 1; /* Makes rows fill the board height */
+}
+
+/* Cell Styling */
 .cell {
-    /* Clean grid pattern */
-    background-color: #212832; 
-    border: 1px solid #161b22; 
+    flex: 1; /* Makes cells fill the row width */
+    /* Use a slight dark/light pattern for grid effect */
+    background-color: #2a2a2a; 
+    border: 1px solid #3c3c3c;
     box-sizing: border-box;
+    transition: background-color 0.1s;
 }
 
+/* Snake and Food */
 .snake-body {
-    background-color: #4CAF50; 
-    border-radius: 0;
-    box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.5);
+    background-color: #4CAF50; /* Vibrant Green */
+    border-radius: 1px;
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
 }
 
 .snake-head {
-    background-color: #8BC34A; 
-    border-radius: 30%; /* Less aggressive rounding */
+    background-color: #8BC34A; /* Lighter Green for head */
+    border-radius: 50%; /* Rounded head */
     box-shadow: 0 0 8px #8BC34A;
 }
 
 .food {
-    background-color: #F44336; 
+    background-color: #F44336; /* Red for food/apple */
     border-radius: 50%;
     transform: scale(0.8);
-    animation: pulse 1s infinite alternate;
-    box-shadow: 0 0 10px rgba(244, 67, 54, 0.7);
+    animation: pulse 1s infinite alternate; /* Pulsing effect for food */
+    border: 2px solid #ffcdd2;
 }
 
 @keyframes pulse {
-    from { transform: scale(0.8); }
-    to { transform: scale(1); }
+    from {
+        transform: scale(0.8);
+    }
+    to {
+        transform: scale(1);
+    }
 }
 
-/*----------------------------------
-  4. OVERLAYS (Start, Pause, Game Over)
-------------------------------------*/
+/* Game Over/Pause Overlay */
 .game-overlay {
     position: absolute;
-    inset: 0; 
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    background-color: rgba(0, 0, 0, 0.9);
+    background-color: rgba(0, 0, 0, 0.85);
     z-index: 10;
-    padding: 20px;
-}
-
-.game-overlay h2 {
-    font-size: 3.5em; 
-    margin-bottom: 10px;
+    text-align: center;
+    border-radius: 5px;
 }
 
 .game-over-overlay h2 {
-    color: #FF5252;
-    text-shadow: 0 0 10px rgba(255, 82, 82, 0.8);
+    color: #FF5252; /* Red for Game Over */
+    font-size: 3em;
+    margin-bottom: 10px;
+    animation: shake 0.5s;
 }
 
 .pause-overlay h2 {
-    color: #FFEB3B;
+    color: #FFEB3B; /* Yellow for Pause */
+    font-size: 2.5em;
 }
 
 .game-overlay p {
-    font-size: 1.3em;
-    color: #ccc;
-    margin-bottom: 30px;
+    font-size: 1.5em;
+    margin-bottom: 20px;
 }
 
-/* Base button style for overlays and speed */
-.game-overlay button,
-.speed-button {
-    padding: 12px 25px; 
-    font-size: 1.3em;
-    border-radius: 8px;
+.game-overlay button {
+    padding: 10px 20px;
+    font-size: 1.2em;
+    cursor: pointer;
+    border: none;
+    border-radius: 5px;
     background-color: #4CAF50;
     color: white;
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s;
+    transition: background-color 0.3s, transform 0.1s;
 }
 
-.game-overlay button:hover,
-.speed-button:hover {
-    background-color: #45a049;
+.game-overlay button:hover {
+    background-color: #6a9f4c;
     transform: scale(1.05);
 }
 
+/* Controls Info */
+.controls-info {
+    margin-top: 20px;
+    font-size: 0.9em;
+    color: #aaa;
+}
+/* ... (Keep all your existing CSS styles) */
+
+/* Add this to the score container to display speed */
+.current-speed {
+    color: #03A9F4; /* Blue color for current speed */
+}
+
+/* Styles for the Speed Selection on the Start Overlay */
+.start-overlay {
+    /* ... (Inherits general overlay styles) */
+}
+
 .speed-options {
-    gap: 30px; 
-    margin: 25px 0;
     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
+    gap: 20px;
+    margin: 20px 0;
 }
 
 .speed-button {
-    background-color: #2f363d;
-    border: 2px solid #2f363d;
+    padding: 10px 15px;
+    font-size: 1.1em;
+    cursor: pointer;
+    border: 2px solid #555;
+    border-radius: 5px;
+    background-color: #333;
+    color: white;
+    transition: background-color 0.2s, border-color 0.2s, transform 0.1s;
+}
+
+.speed-button:hover {
+    background-color: #555;
+    transform: translateY(-2px);
 }
 
 .speed-button.active {
-    background-color: #4CAF50;
+    background-color: #4CAF50; /* Green for active selection */
     border-color: #8BC34A;
     font-weight: bold;
-    box-shadow: 0 0 15px rgba(76, 175, 80, 0.6);
+    box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
 }
-
-.name-input-section {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    margin-top: 15px;
-}
-
-.name-input-section input {
-    padding: 10px 15px;
-    border-radius: 8px;
-    border: 1px solid #555;
-    background-color: #333;
-    color: white;
-    text-align: center;
-    font-size: 1em;
-}
-
-
-/*----------------------------------
-  5. LEADERBOARD
-------------------------------------*/
+/* 🏆 Leaderboard Styles */
 .leaderboard-dropdown {
-    margin-top: 10px;
-    margin-bottom: 25px; /* Added space to prevent overlap */
-    width: 100%;
-    text-align: center;
+  margin-top: 15px;
+  text-align: center;
 }
 
 .leaderboard-toggle {
-    background-color: #4CAF50;
-    padding: 10px 20px;
-    font-size: 1.1em;
-    border-radius: 8px;
+  background-color: #4CAF50;
+  color: white;
+  padding: 8px 16px;
+  font-size: 1em;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.1s;
+}
+
+.leaderboard-toggle:hover {
+  background-color: #45a049;
+  transform: scale(1.05);
 }
 
 .leaderboard-content {
-    background-color: #2f363d; 
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    margin: 10px auto;
-    padding: 15px;
-    width: min(90%, 320px); /* Wider box */
-    max-height: 250px;
-    overflow-y: auto;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-    text-align: left;
+  background-color: #222;
+  color: #fff;
+  border: 1px solid #333;
+  border-radius: 8px;
+  margin-top: 10px;
+  padding: 10px;
+  width: 250px;
+  max-height: 200px;
+  overflow-y: auto;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  text-align: left;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .leaderboard-content ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 .leaderboard-content li {
-    padding: 8px 0;
-    border-bottom: 1px solid #444; 
-    font-size: 1em;
-    display: flex;
-    justify-content: space-between; /* Ensures Name and Score are spaced out */
+  padding: 6px 0;
+  border-bottom: 1px solid #333;
+  font-size: 0.95em;
 }
 
 .leaderboard-content li:last-child {
-    border-bottom: none;
+  border-bottom: none;
 }
 
-/*----------------------------------
-  6. MOBILE CONTROLS (for Touch)
-------------------------------------*/
-.mobile-controls {
-    display: none; 
-    margin-top: 20px;
-    user-select: none;
-    padding-bottom: 10px;
-}
-
-.control-row {
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-    margin: 4px 0;
-}
-
-.control-btn {
-    width: 65px; 
-    height: 65px;
-    border-radius: 15px;
-    font-size: 22px;
-    font-weight: bold;
-    background: #4CAF50;
-    color: white;
-    border: none;
-    box-shadow: 0 5px 0 #388e3c; /* 3D press effect */
-    transition: all 0.1s ease;
-}
-
-.control-btn:active {
-    box-shadow: 0 1px 0 #388e3c;
-    transform: translateY(4px);
-}
-
-/* Media Query to show controls on small screens */
-@media (max-width: 640px) {
-    .mobile-controls {
-        display: block;
-    }
-    .snake-game-container {
-        padding: 20px 10px;
-    }
-    .score-container {
-        font-size: 1em;
-        justify-content: space-around;
-        padding: 10px 0;
-    }
-    .board {
-        /* Ensure board is responsive on small screens */
-        width: min(95vmin, 400px);
-        height: min(95vmin, 400px);
-    }
+.leaderboard-content li:hover {
+  background-color: #333;
+  border-radius: 4px;
 }
