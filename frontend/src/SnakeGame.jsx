@@ -28,14 +28,21 @@ const SnakeGame = () => {
   const [gameSpeed, setGameSpeed] = useState(SPEED_PRESETS.MEDIUM);
   const [speedOption, setSpeedOption] = useState("MEDIUM");
 
-  // 🆕 Added states
   const [speedSelected, setSpeedSelected] = useState(false);
   const [readyToPlay, setReadyToPlay] = useState(false);
 
   const [leaderboard, setLeaderboard] = useState([]);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
 
+  // 🆕 Added for player name input
+  const [playerName, setPlayerName] = useState("");
+  const [showNameInput, setShowNameInput] = useState(false);
+
   const currentDirection = useRef(initialDirection);
+
+  // Touch/swipe refs
+  const touchStartRef = useRef(null);
+  const touchEndRef = useRef(null);
 
   const saveScoreToDB = async (player, score) => {
     try {
@@ -69,18 +76,33 @@ const SnakeGame = () => {
     setIsPaused(false);
     setSpeedSelected(false);
     setReadyToPlay(false);
+    setPlayerName("");
+    setShowNameInput(false);
   }, []);
 
   const changeSpeed = (speedKey) => {
     setGameSpeed(SPEED_PRESETS[speedKey]);
     setSpeedOption(speedKey);
-    setSpeedSelected(true); // show ready button
+    setSpeedSelected(true);
   };
 
-  // 🆕 Start game after Ready clicked
   const handleReadyPlay = () => {
     setReadyToPlay(true);
     setSpeedSelected(false);
+  };
+
+  // helper to set direction but prevent reversing
+  const safeSetDirection = (newDir) => {
+    const opposite = {
+      UP: "DOWN",
+      DOWN: "UP",
+      LEFT: "RIGHT",
+      RIGHT: "LEFT",
+    };
+    if (newDir === opposite[currentDirection.current]) return;
+    if (newDir !== currentDirection.current) {
+      setDirection(newDir);
+    }
   };
 
   useEffect(() => {
@@ -149,7 +171,6 @@ const SnakeGame = () => {
             localStorage.setItem("snakeHighScore", score);
           }
 
-          saveScoreToDB("Guest", score);
           fetchLeaderboard();
           return prevSnake;
         }
@@ -175,6 +196,44 @@ const SnakeGame = () => {
   useEffect(() => {
     fetchLeaderboard();
   }, []);
+
+  // Touch handlers for swipe
+  const handleTouchStart = (e) => {
+    const touch = e.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  };
+
+  const handleTouchEnd = (e) => {
+    if (!touchStartRef.current) return;
+    const touch = e.changedTouches[0];
+    touchEndRef.current = { x: touch.clientX, y: touch.clientY };
+
+    const dx = touchEndRef.current.x - touchStartRef.current.x;
+    const dy = touchEndRef.current.y - touchStartRef.current.y;
+
+    const absDx = Math.abs(dx);
+    const absDy = Math.abs(dy);
+    const threshold = 20; // minimal swipe distance
+
+    if (Math.max(absDx, absDy) < threshold) {
+      touchStartRef.current = null;
+      touchEndRef.current = null;
+      return;
+    }
+
+    if (absDx > absDy) {
+      // horizontal swipe
+      if (dx > 0) safeSetDirection("RIGHT");
+      else safeSetDirection("LEFT");
+    } else {
+      // vertical swipe
+      if (dy > 0) safeSetDirection("DOWN");
+      else safeSetDirection("UP");
+    }
+
+    touchStartRef.current = null;
+    touchEndRef.current = null;
+  };
 
   const renderBoard = () => {
     let rows = [];
@@ -205,6 +264,33 @@ const SnakeGame = () => {
         <div className="game-overlay game-over-overlay">
           <h2>GAME OVER! 💥</h2>
           <p>Final Score: {score}</p>
+
+          {!showNameInput ? (
+            <button onClick={() => setShowNameInput(true)}>
+              Save Score
+            </button>
+          ) : (
+            <div className="name-input-section">
+              <input
+                type="text"
+                placeholder="Enter your name"
+                value={playerName}
+                onChange={(e) => setPlayerName(e.target.value)}
+              />
+              <button
+                onClick={() => {
+                  if (playerName.trim()) {
+                    saveScoreToDB(playerName, score);
+                    fetchLeaderboard();
+                    setShowNameInput(false);
+                  }
+                }}
+              >
+                Submit
+              </button>
+            </div>
+          )}
+
           <button onClick={resetGame}>New Game</button>
         </div>
       );
@@ -218,7 +304,6 @@ const SnakeGame = () => {
       );
     }
 
-    // 🆕 Step 1: Speed select screen
     if (!readyToPlay && !isGameOver && !speedSelected) {
       return (
         <div className="game-overlay start-overlay">
@@ -238,7 +323,6 @@ const SnakeGame = () => {
       );
     }
 
-    // 🆕 Step 2: Show "Ready to Play" after speed selection
     if (speedSelected && !readyToPlay) {
       return (
         <div className="game-overlay ready-overlay">
@@ -283,15 +367,31 @@ const SnakeGame = () => {
         )}
       </div>
 
-      <div className="board-wrapper">
+      <div
+        className="board-wrapper"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         <div className={`board ${isGameOver ? "board-game-over" : ""}`}>
           {renderBoard()}
         </div>
         {renderOverlay()}
       </div>
 
+      {/* Mobile on-screen controls (shown via CSS media queries) */}
+      <div className="mobile-controls">
+        <div className="control-row">
+          <button className="control-btn" onClick={() => safeSetDirection("UP")}>↑</button>
+        </div>
+        <div className="control-row">
+          <button className="control-btn" onClick={() => safeSetDirection("LEFT")}>←</button>
+          <button className="control-btn" onClick={() => safeSetDirection("DOWN")}>↓</button>
+          <button className="control-btn" onClick={() => safeSetDirection("RIGHT")}>→</button>
+        </div>
+      </div>
+
       <div className="controls-info">
-        Use **Arrow Keys** to move. Press **SPACE** to pause/unpause.
+        Use Arrow Keys or on-screen buttons (mobile). Press SPACE to pause/unpause. Swipe also works.
       </div>
     </div>
   );
